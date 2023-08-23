@@ -1,0 +1,31 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: |
+        docker build . --file Dockerfile --tag web-ssh:latest
+        docker save -o web-ssh.tar web-ssh:latest
+        mkdir publish && mv web-ssh.tar ./publish
+
+    - name: Publish
+      uses: s0/git-publish-subdir-action@develop
+      env:
+        REPO: git@github.com:0nion-knight/web-ssh-publish.git
+        BRANCH: master
+        FOLDER: publish
+        SSH_PRIVATE_KEY: ${{ secrets.ACTION_DEPLOY_SECRET }}
+        CLEAR_GLOBS_FILE: ".clear-target-files"
+      
